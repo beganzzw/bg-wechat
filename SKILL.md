@@ -1,10 +1,10 @@
 ---
-name: bg-wechat-tech-creator
+name: bg-wechat
 description: 微信公众号科技创排一体化 Skill。深度融合 human-writing 活人感写作哲学、硬核去 AI 味深度创作、不对称工位口语化表达、极简白板视觉、粉丝留存与高转化闭环，以及将 Markdown/Word/纯文本装配为高保真微信 HTML 排版与双重自动化校验的全流程。适用于：(1) 撰写科技科普、前沿评测、独立开发踩坑与行业观察推文，(2) 解决公域推荐流“只有阅读量没有粉丝”的留存痛点，(3) 严格遵循 human-writing 规范杜绝翻案腔、提示冒号与模型黑话，(4) 设计 2.35:1 官方微信封面与白板配图，(5) 将文章一键排版为石墨极简风微信 HTML 并生成一键复制预览页。
 agent_created: true
 ---
 
-# 微信公众号科技创排一体化引擎 (bg-wechat-tech-creator)
+# 微信公众号科技创排一体化引擎 (bg-wechat)
 
 本 Skill 是一站式微信公众号创排全流程中枢，彻底打破“写作风格”、“活人感去AI味”与“排版引擎”脱节的旧模式，解决**“有好内容排版难”**、**“成稿充满AI味”**以及**“有高阅读零涨粉（做无名慈善）”**三大核心痛点。
 
@@ -15,7 +15,7 @@ agent_created: true
 本 Skill 采用分层解耦与渐进式披露设计（Progressive Disclosure），具体模块拆分如下：
 
 ```
-bg-wechat-tech-creator/
+bg-wechat/
 ├── SKILL.md                      # [总编排中枢] 统筹决策、全流程流水线与关键指令
 ├── references/                   # [精简参考指南] 高度提炼，按需轻量加载
 │   ├── writing-guide.md          # 写作与转化核心：去AI味/口语化、硬禁令、留存闭环、标题4方案
@@ -106,15 +106,15 @@ bg-wechat-tech-creator/
   1. 保存干净正文 HTML 到当前工作区：`{原文件名}_排版_{主题中文名}({英文标识}).html`。
   2. 执行平台合规校验：
      ```bash
-     python C:/Users/18818/.workbuddy-ai/skills/bg-wechat-tech-creator/scripts/validate_gzh_html.py <生成的html路径>
+     python C:/Users/18818/.workbuddy-ai/skills/bg-wechat/scripts/validate_gzh_html.py <生成的html路径>
      ```
      必须确保 ERROR 归零，半角标点全部转为全角。
   3. 生成带一键复制按钮的预览页：
      ```bash
-     python C:/Users/18818/.workbuddy-ai/skills/bg-wechat-tech-creator/scripts/wrap_preview.py <生成的html路径>
+     python C:/Users/18818/.workbuddy-ai/skills/bg-wechat/scripts/wrap_preview.py <生成的html路径>
      ```
   4. 提示用户打开 `{...}_预览.html`，点击右上角「复制到公众号」即可直接粘贴发布。
   5. 一键同步草稿箱（可选）：
      ```bash
-     python C:/Users/18818/.workbuddy-ai/skills/bg-wechat-tech-creator/scripts/publish.py <生成的html路径> --title "文章标题"
+     python C:/Users/18818/.workbuddy-ai/skills/bg-wechat/scripts/publish.py <生成的html路径> --title "文章标题"
      ```

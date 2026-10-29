@@ -1,8 +1,8 @@
-# bg-wechat-tech-creator (微信公众号科技创排一体化引擎)
+# bg-wechat (微信公众号科技创排一体化引擎)
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 
-**bg-wechat-tech-creator** 是一套专为科技科普、前沿 AI 评测、出海独立开发踩坑与极客行业观察打造的微信公众号**创排一体化全流程 Skill**。
+**bg-wechat** 是一套专为科技科普、前沿 AI 评测、出海独立开发踩坑与极客行业观察打造的微信公众号**创排一体化全流程 Skill**。
 
 它彻底打破了“写作风格”、“活人感去 AI 味”与“排版引擎”脱节的旧模式，一站式解决：
 1. **内容充满 AI 模板味**（通过整合 `human-writing` 严格封杀翻案腔、提示冒号与黑话）；
@@ -55,7 +55,7 @@
 ## 目录结构
 
 ```
-bg-wechat-tech-creator/
+bg-wechat/
 ├── SKILL.md                      # [总编排中枢] 统筹决策、五步流水线与调度指南
 ├── LICENSE                       # MIT 开源许可
 ├── README.md                     # 项目完整说明文档
@@ -105,15 +105,15 @@ bg-wechat-tech-creator/
 
 ```bash
 # 克隆到个人技能目录
-git clone https://github.com/beganzzw/bg-wechat-tech-creator.git ~/.workbuddy-ai/skills/bg-wechat-tech-creator
+git clone https://github.com/beganzzw/bg-wechat.git ~/.workbuddy-ai/skills/bg-wechat
 
 # 或直接通过包安装
-python scripts/init_skill.py bg-wechat-tech-creator
+python scripts/init_skill.py bg-wechat
 ```
 
 安装完成后，在会话中直接通过指令唤起：
 ```
-/bg-wechat-tech-creator 帮我把这篇关于开源世界模型的技术材料写成公众号推文并排版
+/bg-wechat 帮我把这篇关于开源世界模型的技术材料写成公众号推文并排版
 ```
 
 ---
