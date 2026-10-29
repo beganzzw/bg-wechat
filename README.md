@@ -59,17 +59,10 @@ wechat-tech-creator/
 ├── SKILL.md                      # [总编排中枢] 统筹决策、五步流水线与调度指南
 ├── LICENSE                       # MIT 开源许可
 ├── README.md                     # 项目完整说明文档
-├── references/                   # [阶段规范与主题库]
-│   ├── 01-writing-style.md       # 阶段一：硬核去 AI 味规范、不对称骨架、口语化词汇表
-│   ├── 02-retention-hooks.md     # 阶段二：粉丝留存与转化闭环（连载预告、资料钩子、尾卡规范）
-│   ├── 03-visual-standards.md    # 阶段三：视觉规范、白板手绘美学、2.35:1 微信封面标准
-│   ├── 04-layout-pipeline.md     # 阶段四：排版装配流程、结构映射、平台红线
-│   ├── reality.md                # 现实写作事实核验准则（来自 human-writing）
-│   ├── revision.md               # 活人感审查与模型黑话清单（来自 human-writing）
-│   ├── theme-index.md            # 主题注册索引与选择决策表
-│   ├── theme-graphite-minimal.md # 石墨极简风组件库（含 16a 动图+官方名片）
-│   ├── common-components.md      # 通用增量组件（紧凑代码块、图片GIF、标签标题）
-│   └── format-normalize.md       # 多格式输入归一化（Word/PDF/纯文本解析）
+├── references/                   # [精简参考指南] 高度提炼，按需轻量加载
+│   ├── writing-guide.md          # 写作与转化核心：去AI味/口语化、硬禁令、留存闭环、标题4方案
+│   ├── themes-and-components.md  # 主题与核心组件库：6大主题速查、标准组件HTML、动图+官方名片
+│   └── layout-pipeline.md        # 排版装配流程：结构映射、平台红线、自动化质检执行指令
 ├── scripts/                      # [自动化工具]
 │   ├── check_prose.py            # [内容质检] 文本级硬禁令与模型化特征静态检查
 │   ├── validate_gzh_html.py      # [排版质检] 微信平台合规校验脚本（span leaf、标签白名单）
@@ -86,15 +79,15 @@ wechat-tech-creator/
 ```
 [原始素材/选题] 
        ⬇
-【步骤 1：硬核活人感创作】── 参考 01-writing-style.md + reality.md
+【步骤 1：硬核活人感创作】── 参考 references/writing-guide.md
        ⬇
 【步骤 2：文本级去 AI 自动化质检】── 运行 python scripts/check_prose.py <草稿.md>（0 违规）
        ⬇
-【步骤 3：留存与转化闭环】── 连载悬念预告 + 资料暗号 + 官方原生名片
+【步骤 3：留存与转化闭环】── 动图 + 资料暗号 + 官方原生名片（零加戏）
        ⬇
-【步骤 4：视觉设计与封面】── 2.35:1 (900×383) 微信封面安全区 + 极简白板微动图
+【步骤 4：视觉设计与封面】── 2.35:1 (900×383) 微信封面安全区
        ⬇
-【步骤 5：排版装配与自动化交付】── 默认装配石墨极简风
+【步骤 5：排版装配与自动化交付】── 参考 references/layout-pipeline.md + themes-and-components.md
        ├─ 运行 python scripts/validate_gzh_html.py <输出.html> (合规 0 错误)
        └─ 运行 python scripts/wrap_preview.py <输出.html> (生成一键复制预览页)
 ```
