@@ -1,8 +1,8 @@
-# WeChat Tech Creator (微信公众号科技创排一体化引擎)
+# bg-wechat-tech-creator (微信公众号科技创排一体化引擎)
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 
-**WeChat Tech Creator** 是一套专为科技科普、前沿 AI 评测、出海独立开发踩坑与极客行业观察打造的微信公众号**创排一体化全流程 Skill**。
+**bg-wechat-tech-creator** 是一套专为科技科普、前沿 AI 评测、出海独立开发踩坑与极客行业观察打造的微信公众号**创排一体化全流程 Skill**。
 
 它彻底打破了“写作风格”、“活人感去 AI 味”与“排版引擎”脱节的旧模式，一站式解决：
 1. **内容充满 AI 模板味**（通过整合 `human-writing` 严格封杀翻案腔、提示冒号与黑话）；
@@ -55,7 +55,7 @@
 ## 目录结构
 
 ```
-wechat-tech-creator/
+bg-wechat-tech-creator/
 ├── SKILL.md                      # [总编排中枢] 统筹决策、五步流水线与调度指南
 ├── LICENSE                       # MIT 开源许可
 ├── README.md                     # 项目完整说明文档
@@ -67,6 +67,7 @@ wechat-tech-creator/
 │   ├── check_prose.py            # [内容质检] 文本级硬禁令与模型化特征静态检查
 │   ├── validate_gzh_html.py      # [排版质检] 微信平台合规校验脚本（span leaf、标签白名单）
 │   ├── wrap_preview.py           # [交付工具] 包装生成带一键复制富文本按钮的预览 HTML
+│   ├── publish.py                # [发布集成] 自动上传配图与封面、一键推送微信公众号草稿箱（集成 bg-unified-publisher）
 │   └── component_lint.py         # 组件库反模式 lint 检查工具
 └── assets/                       # [资源资产]
     └── preview-template.html     # 带 Shadow DOM 原生名片支持的预览模板
@@ -74,7 +75,7 @@ wechat-tech-creator/
 
 ---
 
-## 五步标准流水线
+## 六步标准流水线
 
 ```
 [原始素材/选题] 
@@ -90,6 +91,8 @@ wechat-tech-creator/
 【步骤 5：排版装配与自动化交付】── 参考 references/layout-pipeline.md + themes-and-components.md
        ├─ 运行 python scripts/validate_gzh_html.py <输出.html> (合规 0 错误)
        └─ 运行 python scripts/wrap_preview.py <输出.html> (生成一键复制预览页)
+       ⬇
+【步骤 6：一键多平台发布（可选）】── 运行 python scripts/publish.py (自动替换本地配图至微信 CDN 并同步草稿箱)
 ```
 
 ---
@@ -102,15 +105,15 @@ wechat-tech-creator/
 
 ```bash
 # 克隆到个人技能目录
-git clone https://github.com/beganzzw/wechat-tech-creator.git ~/.workbuddy-ai/skills/wechat-tech-creator
+git clone https://github.com/beganzzw/bg-wechat-tech-creator.git ~/.workbuddy-ai/skills/bg-wechat-tech-creator
 
 # 或直接通过包安装
-python scripts/init_skill.py wechat-tech-creator
+python scripts/init_skill.py bg-wechat-tech-creator
 ```
 
 安装完成后，在会话中直接通过指令唤起：
 ```
-/wechat-tech-creator 帮我把这篇关于开源世界模型的技术材料写成公众号推文并排版
+/bg-wechat-tech-creator 帮我把这篇关于开源世界模型的技术材料写成公众号推文并排版
 ```
 
 ---
