@@ -38,3 +38,18 @@ python scripts/validate_gzh_html.py <生成的html文件路径>
 python scripts/wrap_preview.py <生成的html文件路径>
 ```
 产出 `{原文件名}_预览.html`。用户在浏览器打开后，点击右上角「复制到公众号」按钮，即可完成富文本复制并在公众号后台完美粘贴。
+
+### Step 5: 一键推送微信草稿箱（集成 bg-unified-publisher）
+无需手动复制粘贴，可直接调用内置发布工具一键将文章、配图与封面同步进微信公众号后台草稿箱：
+```bash
+# 全新创建草稿
+python scripts/publish.py <生成的html路径> --title "文章标题" [--digest "摘要"] [--cover <封面路径>]
+
+# 更新已有草稿
+python scripts/publish.py <生成的html路径> --title "文章标题" --update <draft_media_id>
+```
+* **核心特性**：
+  1. 自动检测 HTML 中引用的本地图片并上传至微信 CDN 替换；
+  2. 自动上传本地封面生成 `thumb_media_id`；
+  3. 保留官方 `<mp-common-profile>` 原生关注名片；
+  4. 自动返回微信真机临时预览链接。

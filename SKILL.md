@@ -25,12 +25,13 @@ wechat-tech-creator/
     ├── check_prose.py            # [内容质检关] 自动化检查翻案句、提示冒号、破折号与模型黑话（0 违规）
     ├── validate_gzh_html.py      # [排版质检关] 微信平台合规校验脚本（检查 span leaf、禁用标签与标点）
     ├── wrap_preview.py           # [交付工具] 预览包装脚本（生成带一键复制富文本按钮的预览页）
+    ├── publish.py                # [发布集成] 自动上传配图与封面、一键推送微信公众号草稿箱（集成 bg-unified-publisher）
     └── component_lint.py         # 组件库反模式 lint 检查工具
 ```
 
 ---
 
-## 五步标准作业流水线（Pipeline Workflow）
+## 六步标准作业流水线（Pipeline Workflow）
 
 ```
 [原始素材/选题] 
@@ -43,9 +44,11 @@ wechat-tech-creator/
        ⬇
 【步骤 4：视觉设计与封面】── 2.35:1 (900×383) 微信封面中央安全区
        ⬇
-【步骤 5：排版装配与交付】── 读取 references/layout-pipeline.md + themes-and-components.md
-       ⬇（关键词下划线、紧凑代码块、组件16a动图+原生名片）
-【自动化平台校验与预览生成】── 执行 scripts/validate_gzh_html.py + wrap_preview.py
+【步骤 5：排版装配与平台校验】── 读取 references/layout-pipeline.md + themes-and-components.md
+       ├─ 执行 scripts/validate_gzh_html.py (0 错误合规检查)
+       └─ 执行 scripts/wrap_preview.py (生成一键复制预览页)
+       ⬇
+【步骤 6：一键多平台发布（可选）】── 执行 scripts/publish.py (自动替换本地配图至微信 CDN 并同步草稿箱)
 ```
 
 ---
