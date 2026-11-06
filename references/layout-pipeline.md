@@ -4,26 +4,35 @@
 
 ## 输入与内容状态
 
-- Markdown、纯文本直接识别段落与结构。Word、PDF 使用对应文档读取流程提取内容，不引用不存在的格式归一化文件。
+- Markdown 与纯文本直接识别标题、段落、列表、代码和来源，不需要外部技能。将文本中的 `&`、`<`、`>` 转义后放入 HTML 文本节点；链接与图片保留已核实的地址。代码逐行保留字符和缩进，不修改技术标点。
+- Docx、PDF 和富文本使用当前宿主可用的文档读取工具提取；本包不附带提取器。工具不可用时说明缺少提取能力，使用用户提供的文本继续。核对标题层级、表格、图注和代码，复杂表格对照原件，不把转换损失当作原稿内容。转换只整理结构，不增删实质内容；复用已有确认。
 - 仅排版任务保留原意，不重复要求大纲确认，不擅自改写事实。
 - 完整创作流程先完成 `writing-guide.md` 第 11 节四维检查；带待核实内容的预览只能标记为待核稿。
 
 ## 主题与组件
 
-读取 `themes-and-components.md`，默认石墨极简，可按题材或作者要求选其他主题。该文件为实际组件来源，不引用不存在的分主题文件。
+先锁定组件来源，不混用两个库：
+
+- 未明确选择外部主题时，读取 `themes-and-components.md`，使用包内基础方案及 BG_ROOT 的校验与预览脚本。自定义颜色、字号和间距也在包内流程完成。
+- 仅明确选择外部 gzh-design 主题时，需要独立安装的可选依赖。以用户提供或已确认配置的绝对路径作为 GZH_ROOT，先核验其 `references/theme-index.md`、所选主题文件、`scripts/validate_gzh_html.py` 和 `scripts/wrap_preview.py` 是否存在，再按该安装版索引加载参考。生成或修改外部主题另核验其生成规范和 `scripts/component_lint.py`。不同安装版本的文件名以实际索引为准，不假定一定有某份本地扩展参考。
+- 未配置 GZH_ROOT 或缺少所需文件时，只停止该外部主题分支，说明缺项并提供基础方案供选择；不自动下载、不搜索兄弟目录、不静默替代已指定主题。依赖的许可与版本由其独立安装保留，不复制到本包。
+- 主题选择依次遵从本次明确要求、已确认作者视觉偏好、来源库的推荐规则；仅无既定选择时按该流程确认，明确自动排版则自动选择并说明。用户已确认的强调密度优先于组件库的默认建议。
+- 自定义主题生成、格式转换、登记和 lint 进入主入口 `theme` 的执行 reference，完成后继续当前排版，不重新调用任何 SKILL.md。
+
+以下约束用于两种来源；后续命令中的 `<LAYOUT_ROOT>` 替换为锁定的 BG_ROOT 或 GZH_ROOT 绝对路径。
 
 - 关键词下划线只强调重要结论，单处约 4～15 字，不要求每段都有。
 - 代码块每行使用 `<p style="margin:0">`，避免 `white-space:pre`；保留代码、URL、命令与参数的原始字符，不把语法标点改成全角。
 - 追更组件仅在真实后续计划获确认时使用；资料组件仅在资料和领取路径已确认时使用。组件示例中的承诺、时间、关键词与账号标识不能直接照搬。
 - 没有计划或资料时省略相关卡片，在参考资料之前放与正文有关的可执行建议；参考资料之后结束。
-- 使用静态白板配图，不默认生成长循环动图或人设自白卡。
+- 按内容和用户偏好选择配图；仅排版保留已有图片，不自动生成新图。
 
 ## 结构检查
 
 生成正文 HTML 后执行：
 
 ```bash
-python scripts/validate_gzh_html.py <正文html路径>
+python "<LAYOUT_ROOT>/scripts/validate_gzh_html.py" <正文html绝对路径>
 ```
 
 正文片段不使用 `<style>`、`<script>`、`<div>`、`class`、`id`、`@media` 或外部 CSS。按组件要求包装 `<span leaf="">` 文本节点。自然语言使用中文标点，技术字面值与链接保留原样。
@@ -33,18 +42,18 @@ python scripts/validate_gzh_html.py <正文html路径>
 ## 复制预览交付
 
 ```bash
-python scripts/wrap_preview.py <正文html路径>
+python "<LAYOUT_ROOT>/scripts/wrap_preview.py" <正文html绝对路径>
 ```
 
 交付正文 HTML 和生成的预览页，说明可在预览页点击“复制到公众号”。复制前适度查看显示效果。预览界面控件不属于待发布正文。
 
 ## 可选草稿箱同步
 
-只有用户授权同步时使用；已有明确授权不重复询问。同步前解决关键检查阻断项，确认标题、封面和正文对应同一版本。
+配置环境变量 WECHAT_OA_APPID 与 WECHAT_OA_SECRET（或 WECHAT_OA_APPSECRET），并提供 --cover 或 WECHAT_OA_COVER_MEDIA_ID。此脚本直接调用微信接口，不依赖发布连接器。只有用户授权同步时使用；已有明确授权不重复询问。同步前解决关键检查阻断项，确认标题、封面和正文对应同一版本。
 
 ```bash
-python scripts/publish.py <正文html路径> --title "文章标题" [--digest "摘要"] [--cover <封面路径>]
-python scripts/publish.py <正文html路径> --title "文章标题" --update <draft_media_id>
+python "<BG_ROOT>/scripts/publish.py" <正文html路径> --title "文章标题" [--digest "摘要"] [--cover <封面路径>]
+python "<BG_ROOT>/scripts/publish.py" <正文html路径> --title "文章标题" --update <draft_media_id>
 ```
 
 以实际返回结果记录草稿标识与预览地址，不能预先承诺已生成链接。草稿同步不等于正式发布。正式发布需要相应授权；发布后的复盘使用实际数据和明确统计窗口，参照 `writing-guide.md` 第 13 节。

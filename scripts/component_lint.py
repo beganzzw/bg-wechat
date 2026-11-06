@@ -16,6 +16,7 @@ import glob
 import os
 import re
 import sys
+from validate_gzh_html import exempt_native_classes
 
 CJK = re.compile(r"[一-鿿㐀-䶿]")
 
@@ -52,7 +53,7 @@ def lint_file(path):
             found.append((level, msg))
 
     for m in re.finditer(r"```html\s*\n(.*?)```", text, re.S):
-        html = m.group(1)
+        html = exempt_native_classes(m.group(1))
         for rx, level, msg in CHECKS:
             if rx.search(html):
                 add(level, msg)
@@ -71,7 +72,7 @@ def main():
         sys.exit(1)
 
     total_err = total_warn = clean = 0
-    print(f"📐 组件库源头检查：{len(refs)} 个库\n")
+    print(f" 组件库源头检查：{len(refs)} 个库\n")
     for path in refs:
         name, found = lint_file(path)
         if not found:
@@ -83,13 +84,13 @@ def main():
         total_warn += len(warns)
         print(f"── {name} ──")
         for m in errs:
-            print(f"   ❌ {m}")
+            print(f"    {m}")
         for m in warns:
-            print(f"   ⚠️  {m}")
+            print(f"     {m}")
 
     print(f"\n汇总：{clean}/{len(refs)} 个库干净，ERROR×{total_err}，WARN×{total_warn}")
     if total_err == 0 and total_warn == 0:
-        print("✅ 全部组件库源头无反模式")
+        print(" 全部组件库源头无反模式")
     sys.exit(1 if total_err else 0)
 
 

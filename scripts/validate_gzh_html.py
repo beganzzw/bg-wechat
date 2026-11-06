@@ -9,7 +9,9 @@
     validate_gzh_html.py <file.html>
     validate_gzh_html.py --stdin < file.html
 
-退出码: 1 = 有 ERROR（会被公众号过滤或粘贴后样式丢失）; 0 = 通过。
+退出码: 1 = 命中已编码 ERROR; 0 = 未命中 ERROR（可能仍有 WARNING）。
+覆盖禁用模式、中文 leaf 包裹、部分标点和渐变；不证明完整 HTML 语法、
+英文文本包装、实际粘贴、事实、版权或平台审核通过。
 """
 
 import argparse
@@ -19,6 +21,7 @@ from html.parser import HTMLParser
 
 # (正则, 级别, 说明) —— ERROR 会被公众号编辑器过滤掉或导致样式失效
 FORBIDDEN = [
+    (re.compile(r"<(?:iframe|object|embed|base|form|input|button|textarea|svg|math)\b", re.I), "ERROR", "正文不允许可执行或交互标签"),
     (re.compile(r"<style[\s>]", re.I), "ERROR", "<style> 标签会被过滤，样式必须内联"),
     (re.compile(r"<script[\s>]", re.I), "ERROR", "<script> 标签会被过滤"),
     (re.compile(r"</?div[\s>]", re.I), "ERROR", "<div> 会被改写，请用 <section>"),
@@ -58,6 +61,7 @@ class LeafChecker(HTMLParser):
 
     def __init__(self):
         super().__init__(convert_charrefs=True)
+        self.unsafe_attributes = []
         self.stack = []           # [(tag, is_leaf, is_code)]
         self.leaf_depth = 0       # 处于 span[leaf] 内的嵌套计数
         self.code_depth = 0       # 处于代码区（等宽/pre）内的嵌套计数
@@ -68,6 +72,13 @@ class LeafChecker(HTMLParser):
 
     def handle_starttag(self, tag, attrs):
         ad = dict(attrs)
+        for key, value in attrs:
+            if key.lower().startswith("on") or key.lower() == "srcdoc":
+                self.unsafe_attributes.append(f"<{tag}> 的 {key} 属性不允许")
+            if key.lower() in {"href", "src", "xlink:href", "action", "formaction"}:
+                normalized = re.sub(r"[\s\x00-\x20]+", "", value or "").lower()
+                if normalized.startswith(("javascript:", "vbscript:", "data:text/html", "data:image/svg")):
+                    self.unsafe_attributes.append(f"<{tag}> 的 URL 协议不允许")
         style = ad.get("style", "") or ""
         if tag not in SKIP_TAGS and not any(t in SKIP_TAGS for t, _, _ in self.stack):
             if GRADIENT_BACKGROUND.search(CSS_NON_FUNCTION.sub("", style)):
@@ -109,12 +120,18 @@ class LeafChecker(HTMLParser):
             self.half_punct.append(snippet)
 
 
+NATIVE_OPEN = re.compile(r"<(?:mp-common-profile|mpvoice|mp-miniprogram|mp-common-videosnap)\b[^>]*>", re.I)
+CLASS_ATTRIBUTE = re.compile(r"\sclass\s*=\s*(?:\"[^\"]*\"|'[^']*'|[^\s>]+)", re.I)
+
+
+def exempt_native_classes(html):
+    return NATIVE_OPEN.sub(lambda m: CLASS_ATTRIBUTE.sub("", m.group()), html)
+
+
 def validate(html, name="<input>"):
     errors, warnings = [], []
 
-    # 微信官方原生组件（如 mp-common-profile, mpvoice, mp-miniprogram 等）自带 class 和 data 属性，免除通用 class 检查
-    clean_for_forbidden = re.sub(r"<(?:mp-common-profile|mpvoice|mp-miniprogram|mp-common-videosnap)[\s>].*?</(?:mp-common-profile|mpvoice|mp-miniprogram|mp-common-videosnap)>", "", html, flags=re.S | re.I)
-    clean_for_forbidden = re.sub(r"<(?:mp-common-profile|mpvoice|mp-miniprogram|mp-common-videosnap)[^>]*/>", "", clean_for_forbidden, flags=re.I)
+    clean_for_forbidden = exempt_native_classes(html)
 
     for rx, level, msg in FORBIDDEN:
         hits = len(rx.findall(clean_for_forbidden))
@@ -127,6 +144,8 @@ def validate(html, name="<input>"):
         checker.feed(html)
     except Exception as e:  # 容错：解析失败不致命，只提示
         warnings.append(f"HTML 解析中断: {e}")
+
+    errors.extend(checker.unsafe_attributes)
 
     if checker.gradient_backgrounds:
         sample = "；".join(f"第 {line} 行 {col} 列 <{tag}>"
@@ -172,20 +191,22 @@ def main():
 
     errors, warnings, leaf_n = validate(html, name)
 
-    print(f"📋 公众号 HTML 合规校验: {name}")
+    print(f"公众号 HTML 已编码规则检查: {name}")
     print(f"   span leaf 包裹: {leaf_n} 处")
     if errors:
-        print(f"\n❌ ERROR ×{len(errors)}（必须修复，否则粘贴后失效）:")
+        print(f"\nERROR ×{len(errors)}（命中规则，需修复）:")
         for e in errors:
-            print(f"   • {e}")
+            print(f"   - {e}")
     if warnings:
-        print(f"\n⚠️  WARNING ×{len(warnings)}（建议检查）:")
+        print(f"\nWARNING ×{len(warnings)}（逐项复核，不自动升级为 ERROR）:")
         for w in warnings:
-            print(f"   • {w}")
+            print(f"   - {w}")
     if not errors and not warnings:
-        print("\n✅ 完全合规，可直接粘贴到公众号编辑器")
+        print("\n未发现本检查器覆盖的问题；不代表完全合规。")
     elif not errors:
-        print("\n✅ 无致命问题，可粘贴（warning 请人工确认）")
+        print("\n未命中 ERROR；仍有 WARNING 待复核，退出码 0 不代表验收完成。")
+    print("覆盖范围：禁用模式、中文 leaf 包裹、部分标点和渐变背景。")
+    print("未验证：完整 HTML 语法、英文文本包装、实际粘贴与客户端显示、事实、版权和平台审核。")
 
     sys.exit(1 if errors else 0)
 

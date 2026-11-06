@@ -3,3 +3,15 @@ __pycache__/
 *$py.class
 .DS_Store
 Thumbs.db
+references/author-memory.local.md
+content-system/
+.env
+.env.*
+!.env.example
+/vendor/
+/LICENSE.original*
+/License.original*
+/THIRD*
+*.local.md
+_skillhub_meta.json
+_knot_meta.json

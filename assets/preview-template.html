@@ -21,8 +21,8 @@
 </head>
 <body>
 <div class="gzh-toolbar">
-  <span class="gzh-hint">👇 下方是排版效果 · 点右侧 <b>复制</b> 直接粘到公众号</span>
-  <button class="gzh-copy" id="gzhCopyBtn" onclick="gzhCopy()">📋 复制到公众号</button>
+  <span class="gzh-hint"> 下方是排版效果 · 点右侧 <b>复制</b> 直接粘到公众号</span>
+  <button class="gzh-copy" id="gzhCopyBtn" onclick="gzhCopy()"> 复制到公众号</button>
 </div>
 <div class="gzh-toast" id="gzhToast"></div>
 <div class="gzh-stage">
@@ -71,11 +71,11 @@
       if(handler)document.removeEventListener('copy',handler);
     }
     if(ok){
-      gzhShowToast('✅ 已复制！去公众号编辑器按 Ctrl/⌘+V 粘贴即可');
-      var old=btn.textContent;btn.textContent='✅ 已复制';
+      gzhShowToast(' 已复制！去公众号编辑器按 Ctrl/⌘+V 粘贴即可');
+      var old=btn.textContent;btn.textContent=' 已复制';
       setTimeout(function(){btn.textContent=old;},2200);
     }else{
-      gzhShowToast('⚠ 浏览器阻止复制，请换 Edge/Chrome 后重试');
+      gzhShowToast(' 浏览器阻止复制，请换 Edge/Chrome 后重试');
     }
   }
 
@@ -85,21 +85,28 @@
       connectedCallback() {
         if (this.shadowRoot) return;
         const shadow = this.attachShadow({ mode: 'open' });
-        const nickname = this.getAttribute('data-nickname') || 'AIGC小曾';
+        const nickname = this.getAttribute('data-nickname') || '公众号';
         const headimg = this.getAttribute('data-headimg') || '';
-        const signature = this.getAttribute('data-signature') || '每月实打实扣 API 账单的独立开发者';
+        const signature = this.getAttribute('data-signature') || '';
         shadow.innerHTML = `
           <div style="margin:20px 0 10px;background:#FFFFFF;border:1px solid #E5E5E5;border-radius:8px;padding:14px 16px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 2px 8px rgba(0,0,0,0.02);font-family:-apple-system,BlinkMacSystemFont,'PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif;">
             <div style="display:flex;align-items:center;gap:12px;flex:1;min-width:0;">
-              ${headimg ? `<img src="${headimg}" style="width:46px;height:46px;border-radius:50%;object-fit:cover;flex-shrink:0;">` : `<div style="width:46px;height:46px;border-radius:50%;background:#27272A;color:#FFF;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:16px;flex-shrink:0;">曾</div>`}
+              <img data-avatar hidden alt="账号头像" style="width:46px;height:46px;border-radius:50%;object-fit:cover;flex-shrink:0;">
               <div style="flex:1;min-width:0;padding-right:10px;">
-                <div style="font-size:15px;font-weight:700;color:#000000;margin-bottom:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${nickname}</div>
-                <div style="font-size:12px;color:#888888;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;line-height:1.4;">${signature}</div>
+                <div data-name style="font-size:15px;font-weight:700;color:#000000;margin-bottom:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"></div>
+                <div data-signature style="font-size:12px;color:#888888;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;line-height:1.4;"></div>
               </div>
             </div>
             <div style="flex-shrink:0;background:#07C160;color:#FFFFFF;font-size:13px;font-weight:500;padding:6px 14px;border-radius:4px;text-align:center;">+ 关注</div>
           </div>
         `;
+        shadow.querySelector('[data-name]').textContent = nickname;
+        shadow.querySelector('[data-signature]').textContent = signature;
+        if (/^https?:\/\//i.test(headimg)) {
+          const avatar = shadow.querySelector('[data-avatar]');
+          avatar.src = headimg;
+          avatar.hidden = false;
+        }
       }
     });
   }

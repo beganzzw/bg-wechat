@@ -15,6 +15,8 @@ validate_gzh_html.py（本预览页含 script/style，不参与校验）。
 
 import os
 import sys
+from html import escape
+from validate_gzh_html import validate
 
 
 def main():
@@ -27,12 +29,16 @@ def main():
         sys.exit(1)
 
     content = open(src, encoding="utf-8").read().strip()
+    errors, _, _ = validate(content)
+    if errors:
+        print("正文命中结构错误，拒绝生成可执行预览。")
+        sys.exit(1)
     tpl_path = os.path.join(os.path.dirname(os.path.abspath(__file__)),
                             "..", "assets", "preview-template.html")
     tpl = open(tpl_path, encoding="utf-8").read()
 
     title = os.path.splitext(os.path.basename(src))[0]
-    out_html = tpl.replace("{{TITLE}}", title).replace("<!--GZH_CONTENT-->", content)
+    out_html = tpl.replace("{{TITLE}}", escape(title)).replace("<!--GZH_CONTENT-->", content)
 
     out = sys.argv[2] if len(sys.argv) > 2 else os.path.splitext(src)[0] + "_预览.html"
     open(out, "w", encoding="utf-8").write(out_html)

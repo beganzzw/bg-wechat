@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""bg-unified-publisher 集成发布脚本。
+"""微信公众号草稿同步脚本（直接调用官方接口）。
 
 支持将生成的公众号 HTML 直接推送到微信公众号草稿箱（自动上传本地配图与封面至微信 CDN 并替换路径），
-并可扩展推送到小红书等平台。
+仅同步草稿，不执行正式发布；必须先取得用户授权。
 
 用法:
     python scripts/publish.py <html文件路径> --title "文章标题" [--digest "摘要"] [--cover <封面路径>] [--update <media_id>]
@@ -14,18 +14,16 @@ import os
 import re
 import sys
 import urllib.request
-from pathlib import Path
+from urllib.parse import urlencode
+from validate_gzh_html import validate
 
-# 默认凭据从环境变量或内置安全存储获取
-DEFAULT_APPID = os.environ.get("WECHAT_OA_APPID", "wx6ad9de0a2bdfcb42")
-DEFAULT_SECRET = os.environ.get("WECHAT_OA_SECRET", os.environ.get("WECHAT_OA_APPSECRET", "2c913d57c3d3ad4e610402514e2e4f05"))
-DEFAULT_COVER_MEDIA_ID = "8Ore6s5-I7xpG5-S_hHgpaGvn1OGDxmYrq1AG6U3GwvFGTmpCNyo8Y9LUDMj5SQt"
+# 凭据与封面只能由运行环境提供，不内置任何账号。
 
 
 def get_access_token(appid, secret):
-    url = f"https://api.weixin.qq.com/cgi-bin/token?grant_type=client_credential&appid={appid}&secret={secret}"
+    url = "https://api.weixin.qq.com/cgi-bin/token?" + urlencode({"grant_type": "client_credential", "appid": appid, "secret": secret})
     req = urllib.request.Request(url)
-    with urllib.request.urlopen(req) as resp:
+    with urllib.request.urlopen(req, timeout=30) as resp:
         data = json.loads(resp.read().decode("utf-8"))
     if "access_token" not in data:
         raise RuntimeError(f"获取微信 Token 失败: {data}")
@@ -49,7 +47,7 @@ def upload_image_to_cdn(token, image_path):
     ).encode("utf-8") + file_bytes + f"\r\n--{boundary}--\r\n".encode("utf-8")
 
     req = urllib.request.Request(url, data=body, headers={"Content-Type": f"multipart/form-data; boundary={boundary}"})
-    with urllib.request.urlopen(req) as resp:
+    with urllib.request.urlopen(req, timeout=30) as resp:
         res = json.loads(resp.read().decode("utf-8"))
     if "url" not in res:
         raise RuntimeError(f"上传图片到微信 CDN 失败: {res}")
@@ -73,7 +71,7 @@ def upload_cover_material(token, cover_path):
     ).encode("utf-8") + file_bytes + f"\r\n--{boundary}--\r\n".encode("utf-8")
 
     req = urllib.request.Request(url, data=body, headers={"Content-Type": f"multipart/form-data; boundary={boundary}"})
-    with urllib.request.urlopen(req) as resp:
+    with urllib.request.urlopen(req, timeout=30) as resp:
         res = json.loads(resp.read().decode("utf-8"))
     if "media_id" not in res:
         raise RuntimeError(f"上传封面素材失败: {res}")
@@ -90,7 +88,7 @@ def replace_local_images(content_html, token, base_dir):
             continue
         # 本地文件路径解析
         local_path = os.path.join(base_dir, src) if not os.path.isabs(src) else src
-        if os.path.exists(local_path) and local_path not in uploaded:
+        if os.path.exists(local_path) and src not in uploaded:
             print(f"  正在自动上传本地配图至微信 CDN: {os.path.basename(local_path)}...")
             cdn_url = upload_image_to_cdn(token, local_path)
             uploaded[src] = cdn_url
@@ -101,11 +99,28 @@ def replace_local_images(content_html, token, base_dir):
     return content_html
 
 
-def publish_to_wechat(html_path, title=None, author="AIGC小曾", digest=None, cover_path=None, update_media_id=None, appid=DEFAULT_APPID, secret=DEFAULT_SECRET):
+def publish_to_wechat(html_path, title=None, author="", digest=None, cover_path=None, update_media_id=None, appid=None, secret=None):
     with open(html_path, "r", encoding="utf-8") as f:
         html = f.read()
 
+    appid = appid or os.environ.get("WECHAT_OA_APPID")
+    secret = secret or os.environ.get("WECHAT_OA_SECRET") or os.environ.get("WECHAT_OA_APPSECRET")
+    if not appid or not secret:
+        raise ValueError("缺少 WECHAT_OA_APPID 与 WECHAT_OA_SECRET/WECHAT_OA_APPSECRET")
+    if cover_path and not os.path.isfile(cover_path):
+        raise ValueError("封面文件不存在")
+    cover_media_id = os.environ.get("WECHAT_OA_COVER_MEDIA_ID", "")
+    if not cover_path and not cover_media_id:
+        raise ValueError("必须提供 --cover 或 WECHAT_OA_COVER_MEDIA_ID")
+    errors, warnings, _ = validate(html)
+    if errors:
+        raise ValueError("正文结构检查未通过，请先运行 validate_gzh_html.py")
+    if warnings:
+        raise ValueError("正文仍有 WARNING，请先复核并修复后同步")
     base_dir = os.path.dirname(os.path.abspath(html_path))
+    for src in re.findall(r'<img\s+[^>]*src=["\']([^"\']+)["\']', html, re.I):
+        if not src.lower().startswith(("https://", "http://")) and not os.path.isfile(os.path.join(base_dir, src)):
+            raise ValueError("正文图片路径无效，请先补齐图片")
     token = get_access_token(appid, secret)
 
     # 1. 自动处理正文中出现的本地图片
@@ -116,7 +131,7 @@ def publish_to_wechat(html_path, title=None, author="AIGC小曾", digest=None, c
         print(f"  正在上传自定义封面: {os.path.basename(cover_path)}...")
         thumb_media_id = upload_cover_material(token, cover_path)
     else:
-        thumb_media_id = DEFAULT_COVER_MEDIA_ID
+        thumb_media_id = cover_media_id
 
     # 3. 提取或兜底标题和摘要
     if not title:
@@ -153,7 +168,7 @@ def publish_to_wechat(html_path, title=None, author="AIGC小曾", digest=None, c
         data=json.dumps(payload, ensure_ascii=False).encode("utf-8"),
         headers={"Content-Type": "application/json; charset=utf-8"}
     )
-    with urllib.request.urlopen(req) as resp:
+    with urllib.request.urlopen(req, timeout=30) as resp:
         res = json.loads(resp.read().decode("utf-8"))
 
     if update_media_id:
@@ -170,7 +185,7 @@ def publish_to_wechat(html_path, title=None, author="AIGC小曾", digest=None, c
     req_get = urllib.request.Request(get_url, data=json.dumps({"media_id": media_id}).encode("utf-8"), headers={"Content-Type": "application/json"})
     preview_url = ""
     try:
-        with urllib.request.urlopen(req_get) as resp_get:
+        with urllib.request.urlopen(req_get, timeout=30) as resp_get:
             res_get = json.loads(resp_get.read().decode("utf-8"))
             preview_url = res_get.get("news_item", [{}])[0].get("url", "")
     except Exception:
@@ -185,10 +200,10 @@ def publish_to_wechat(html_path, title=None, author="AIGC小曾", digest=None, c
 
 
 def main():
-    parser = argparse.ArgumentParser(description="bg-unified-publisher 微信公众号集成发布工具")
+    parser = argparse.ArgumentParser(description="微信公众号草稿同步工具（需预先授权）")
     parser.add_argument("html", help="HTML 文件路径")
     parser.add_argument("--title", help="文章标题")
-    parser.add_argument("--author", default="AIGC小曾", help="文章作者")
+    parser.add_argument("--author", default="", help="文章作者")
     parser.add_argument("--digest", help="文章摘要")
     parser.add_argument("--cover", help="本地封面图片路径")
     parser.add_argument("--update", help="更新已有的 draft media_id")
@@ -198,7 +213,7 @@ def main():
         print(f"错误: 找不到文件 {args.html}")
         sys.exit(1)
 
-    print(f"🚀 开始执行发布流水线: {args.html}")
+    print(f" 开始执行发布流水线: {args.html}")
     try:
         res = publish_to_wechat(
             html_path=args.html,
@@ -208,12 +223,12 @@ def main():
             cover_path=args.cover,
             update_media_id=args.update
         )
-        print("✅ 成功同步至微信公众号草稿箱！")
+        print(" 成功同步至微信公众号草稿箱！")
         print(f"  • Media ID: {res['media_id']}")
         if res["preview_url"]:
             print(f"  • 微信真机预览链接: {res['preview_url']}")
     except Exception as e:
-        print(f"❌ 发布失败: {e}")
+        print(f"草稿同步失败（{type(e).__name__}）；检查配置与接口状态，不自动更换凭据重试。")
         sys.exit(1)
 
 
